@@ -1,17 +1,11 @@
 import tasks = require('azure-pipelines-task-lib/task');
-import {TerraformToolHandler, ITerraformToolHandler, TerraformInterfaces} from './terraform';
-import {IExecOptions, ToolRunner} from 'azure-pipelines-task-lib/toolrunner';
-import {TerraformCommand} from './terraform';
+import {ToolRunner} from 'azure-pipelines-task-lib/toolrunner';
 import {TerraformInit, TerraformApply, TerraformPlan, TerraformDestroy} from './terraform-commands';
-import {BaseTerraformCommandHandler} from './terraform-command-handler';
-import { injectable, inject } from 'inversify';
+import {BaseTerraformCommandHandler} from './base-terraform-command-handler';
 
-@injectable()
 export class TerraformCommandHandlerAWS extends BaseTerraformCommandHandler {
-    constructor(
-        @inject(TerraformInterfaces.ITerraformToolHandler) terraformToolHandler: ITerraformToolHandler
-    ) {
-        super(terraformToolHandler);
+    constructor() {
+        super();
         this.providerName = "aws";
     }
 
@@ -21,22 +15,6 @@ export class TerraformCommandHandlerAWS extends BaseTerraformCommandHandler {
         this.backendConfig.set('region', tasks.getInput("backendAWSRegion", true));
         this.backendConfig.set('access_key', tasks.getEndpointAuthorizationParameter(backendServiceName, "username", true));
         this.backendConfig.set('secret_key', tasks.getEndpointAuthorizationParameter(backendServiceName, "password", true));
-    }
-
-    public async init(): Promise<number> {
-        let initCommand = new TerraformInit(
-            "init",
-            tasks.getInput("workingDirectory"),
-            tasks.getInput("backendTypeAWS"),
-            tasks.getInput("commandOptions")
-        );
-
-        let terraformToolAWS = this.terraformToolHandler.create(initCommand);
-        this.handleBackend(initCommand, terraformToolAWS);
-        
-        return terraformToolAWS.exec(<IExecOptions> {
-            cwd: initCommand.workingDirectory
-        });
     }
 
     public handleBackend(command: TerraformInit, terraformToolRunner: ToolRunner): void {

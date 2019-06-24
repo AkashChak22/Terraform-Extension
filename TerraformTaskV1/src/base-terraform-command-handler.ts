@@ -1,9 +1,8 @@
-import {TerraformToolHandler, ITerraformToolHandler, TerraformInterfaces} from './terraform';
+import {TerraformToolHandler, ITerraformToolHandler} from './terraform';
 import {ToolRunner, IExecOptions} from 'azure-pipelines-task-lib/toolrunner';
-import {TerraformCommand} from './terraform';
+import {BaseTerraformCommand} from './terraform-commands';
 import {TerraformInit, TerraformApply, TerraformPlan, TerraformDestroy} from './terraform-commands';
 import tasks = require('azure-pipelines-task-lib/task');
-import { injectable, inject } from 'inversify';
 
 export interface ITerraformCommandHandler {
     providerName: string;
@@ -11,39 +10,51 @@ export interface ITerraformCommandHandler {
     backendConfig: Map<string, string>;
 
     init(): Promise<number>;
-    handleBackend(command: TerraformInit, terraformToolRunner: ToolRunner);
     plan(): Promise<number>;
     apply(): Promise<number>;
     destroy(): Promise<number>;
-    handleProvider(command: TerraformPlan | TerraformApply | TerraformDestroy, terraformToolRunner: ToolRunner);
     validate(): Promise<number>;
 }
 
-@injectable()
 export abstract class BaseTerraformCommandHandler implements ITerraformCommandHandler {
     providerName: string;
     terraformToolHandler: ITerraformToolHandler;
     backendConfig: Map<string, string>;
     
-    public async abstract init(): Promise<number>;
-    abstract handleBackend(command: TerraformInit, terraformToolRunner: ToolRunner);
-
-    constructor(
-        @inject(TerraformInterfaces.ITerraformToolHandler) terraformToolHandler: ITerraformToolHandler
-    ) {
-        this.providerName = "";
-        this.terraformToolHandler = terraformToolHandler;
-        this.backendConfig = new Map<string, string>();
-    }
-
     protected getServiceProviderNameFromProviderInput(): string {
         let provider: string = tasks.getInput("provider", true);
         
         switch (provider) {
             case "azurerm": return "AzureRM";
-            case "aws": return "AWS";
-            case "gcp": return "GCP";
+            case "aws"    : return "AWS";
+            case "gcp"    : return "GCP";
         }
+    }
+
+    abstract handleBackend(command: TerraformInit, terraformToolRunner: ToolRunner);
+
+    public async init(): Promise<number> {
+        let backendName = `backendType${this.getServiceProviderNameFromProviderInput()}`;
+
+        let initCommand = new TerraformInit(
+            "init",
+            tasks.getInput("workingDirectory"),
+            tasks.getInput(backendName),
+            tasks.getInput("commandOptions")
+        );
+
+        let terraformTool = this.terraformToolHandler.createToolRunner(initCommand);
+        this.handleBackend(initCommand, terraformTool);
+        
+        return terraformTool.exec(<IExecOptions> {
+            cwd: initCommand.workingDirectory
+        });
+    }
+
+    constructor() {
+        this.providerName = "";
+        this.terraformToolHandler = new TerraformToolHandler(tasks);
+        this.backendConfig = new Map<string, string>();
     }
 
     public async plan(): Promise<number> {
@@ -55,7 +66,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             tasks.getInput("commandOptions")
         );
 
-        let terraformTool = this.terraformToolHandler.create(planCommand);
+        let terraformTool = this.terraformToolHandler.createToolRunner(planCommand);
         this.handleProvider(planCommand, terraformTool);
         return terraformTool.exec(<IExecOptions> {
             cwd: planCommand.workingDirectory
@@ -78,7 +89,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             additionalArgs
         );
 
-        let terraformTool = this.terraformToolHandler.create(applyCommand);
+        let terraformTool = this.terraformToolHandler.createToolRunner(applyCommand);
         this.handleProvider(applyCommand, terraformTool);
         return terraformTool.exec(<IExecOptions> {
             cwd: applyCommand.workingDirectory
@@ -101,7 +112,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             additionalArgs
         );
 
-        let terraformTool = this.terraformToolHandler.create(destroyCommand);
+        let terraformTool = this.terraformToolHandler.createToolRunner(destroyCommand);
         this.handleProvider(destroyCommand, terraformTool);
         return terraformTool.exec(<IExecOptions> {
             cwd: destroyCommand.workingDirectory
@@ -111,19 +122,15 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     abstract handleProvider(command: TerraformApply | TerraformPlan | TerraformDestroy, terraformToolRunner: ToolRunner);
 
     public async validate(): Promise<number> {
-        let validateCommand = new TerraformCommand(
+        let validateCommand = new BaseTerraformCommand(
             "validate",
             tasks.getInput("workingDirectory"),
             tasks.getInput("commandOptions")
         );
 
-        let terraformTool = this.terraformToolHandler.create(validateCommand);
+        let terraformTool = this.terraformToolHandler.createToolRunner(validateCommand);
         return terraformTool.exec(<IExecOptions>{
             cwd: validateCommand.workingDirectory
         });
     }
-}
-
-export const CommandHandlerInterfaces = {
-    ITerraformCommandHandler: Symbol("ITerraformCommandHandler")
 }

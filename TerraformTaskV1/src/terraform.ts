@@ -1,27 +1,10 @@
-import {ToolRunner} from 'azure-pipelines-task-lib/toolrunner'
-import { injectable } from 'inversify';
-
-export class TerraformCommand {
-    public readonly name: string;
-    public readonly additionalArgs: string | undefined;
-    public readonly workingDirectory: string;
-
-    constructor(
-        name: string,
-        workingDirectory: string,
-        additionalArgs?: string
-    ) {
-        this.name = name;
-        this.workingDirectory = workingDirectory;  
-        this.additionalArgs = additionalArgs;
-    } 
-}
+import { ToolRunner } from 'azure-pipelines-task-lib/toolrunner'
+import { BaseTerraformCommand } from './terraform-commands'
 
 export interface ITerraformToolHandler {
-    create(command?: TerraformCommand): ToolRunner;
+    createToolRunner(command?: BaseTerraformCommand): ToolRunner;
 }
 
-@injectable()
 export class TerraformToolHandler implements ITerraformToolHandler {
     private readonly tasks: any;
     
@@ -29,7 +12,7 @@ export class TerraformToolHandler implements ITerraformToolHandler {
         this.tasks = tasks;
     }
 
-    public create(command?: TerraformCommand): ToolRunner {
+    public createToolRunner(command?: BaseTerraformCommand): ToolRunner {
         let terraformPath = this.tasks.which("terraform", true);
 
         let terraformToolRunner: ToolRunner = this.tasks.tool(terraformPath);
@@ -42,8 +25,4 @@ export class TerraformToolHandler implements ITerraformToolHandler {
 
         return terraformToolRunner;
     }
-}
-
-export const TerraformInterfaces = {
-    ITerraformToolHandler: Symbol("ITerraformToolHandler")
 }

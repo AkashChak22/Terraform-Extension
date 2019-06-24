@@ -1,7 +1,20 @@
-import {TerraformCommand} from './terraform';
+export class BaseTerraformCommand {
+    public readonly name: string;
+    public readonly workingDirectory: string;
+    public readonly additionalArgs: string | undefined;
 
-export class TerraformInit extends TerraformCommand {
-    // readonly backendType: BackendTypes | undefined;
+    constructor(
+        name: string,
+        workingDirectory: string,
+        additionalArgs?: string
+    ) {
+        this.name = name;
+        this.workingDirectory = workingDirectory;  
+        this.additionalArgs = additionalArgs;
+    } 
+}
+
+export class TerraformInit extends BaseTerraformCommand {
     readonly backendType: string | undefined;
 
     constructor(
@@ -12,13 +25,12 @@ export class TerraformInit extends TerraformCommand {
     ) {
         super(name, workingDirectory, additionalArgs);
         if (backendType) {
-            // this.backendType = BackendTypes[<keyof typeof BackendTypes> backendType];
             this.backendType = backendType;
         }
     }
 }
 
-export class TerraformPlan extends TerraformCommand {
+export class TerraformPlan extends BaseTerraformCommand {
     readonly serviceProvidername: string;
 
     constructor(
@@ -32,7 +44,7 @@ export class TerraformPlan extends TerraformCommand {
     }
 }
 
-export class TerraformApply extends TerraformCommand {
+export class TerraformApply extends BaseTerraformCommand {
     readonly serviceProvidername: string;
 
     constructor(
@@ -46,7 +58,7 @@ export class TerraformApply extends TerraformCommand {
     }
 }
 
-export class TerraformDestroy extends TerraformCommand {
+export class TerraformDestroy extends BaseTerraformCommand {
     readonly serviceProvidername: string;
 
     constructor(

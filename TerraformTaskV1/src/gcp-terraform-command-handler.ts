@@ -1,35 +1,13 @@
 import tasks = require('azure-pipelines-task-lib/task');
-import {TerraformToolHandler, ITerraformToolHandler, TerraformInterfaces} from './terraform';
-import {IExecOptions, ToolRunner} from 'azure-pipelines-task-lib/toolrunner';
-import {TerraformCommand} from './terraform';
+import {ToolRunner} from 'azure-pipelines-task-lib/toolrunner';
 import {TerraformInit, TerraformApply, TerraformPlan, TerraformDestroy} from './terraform-commands';
-import {BaseTerraformCommandHandler} from './terraform-command-handler';
+import {BaseTerraformCommandHandler} from './base-terraform-command-handler';
 import * as path from 'path';
-import { injectable, inject } from 'inversify';
 
-@injectable()
 export class TerraformCommandHandlerGCP extends BaseTerraformCommandHandler {
-    constructor(
-        @inject(TerraformInterfaces.ITerraformToolHandler) terraformToolHandler: ITerraformToolHandler
-    ) {
-        super(terraformToolHandler);
+    constructor() {
+        super();
         this.providerName = "gcp";
-    }
-
-    public async init(): Promise<number> {
-        let initCommand = new TerraformInit(
-            "init",
-            tasks.getInput("workingDirectory"),
-            tasks.getInput("backendTypeGCP"),
-            tasks.getInput("commandOptions")
-        );
-
-        let terraformToolGCP = this.terraformToolHandler.create(initCommand);
-        this.handleBackend(initCommand, terraformToolGCP);
-        
-        return terraformToolGCP.exec(<IExecOptions> {
-            cwd: initCommand.workingDirectory
-        });
     }
 
     private setupBackend(backendServiceName: string) {
