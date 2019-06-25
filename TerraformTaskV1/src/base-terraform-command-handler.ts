@@ -20,13 +20,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     providerName: string;
     terraformToolHandler: ITerraformToolHandler;
     backendConfig: Map<string, string>;
-
-    constructor() {
-        this.providerName = "";
-        this.terraformToolHandler = new TerraformToolHandler(tasks);
-        this.backendConfig = new Map<string, string>();
-    }
-
+    
     protected warnIfMultipleProviders(): void {
         let terraformPath = tasks.which("terraform", true);
 
@@ -42,7 +36,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             tasks.warning("Multiple provider blocks specified in the .tf files in the current working drectory.");
         }
     }
-    
+
     protected getServiceProviderNameFromProviderInput(): string {
         let provider: string = tasks.getInput("provider", true);
         
@@ -71,6 +65,12 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
         return terraformTool.exec(<IExecOptions> {
             cwd: initCommand.workingDirectory
         });
+    }
+
+    constructor() {
+        this.providerName = "";
+        this.terraformToolHandler = new TerraformToolHandler(tasks);
+        this.backendConfig = new Map<string, string>();
     }
 
     public async plan(): Promise<number> {
