@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "custom-terraform-tasks",
     "name": "Custom Terraform Release Task",
-    "version": "0.0.32",
+    "version": "0.0.60",
     "publisher": "Akash-Chakrabarti",
     "targets": [
         {
@@ -57,17 +57,6 @@
                     {
                         "type": "ms.vss-endpoint.endpoint-auth-scheme-JWT",
                         "inputDescriptors": [
-                            {
-                                "id": "certificate",
-                                "name": "JSON Text",
-                                "description": "The contents of the JSON key file",
-                                "inputMode": "TextArea",
-                                "isConfidential": true,
-                                "validation": {
-                                    "isRequired": true,
-                                    "dataType": "string"
-                                }
-                            },
                             {
                                 "id": "project",
                                 "name": "project",
