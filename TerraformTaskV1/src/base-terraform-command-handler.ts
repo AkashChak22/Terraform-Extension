@@ -1,5 +1,5 @@
 import {TerraformToolHandler, ITerraformToolHandler} from './terraform';
-import {ToolRunner, IExecOptions} from 'azure-pipelines-task-lib/toolrunner';
+import {ToolRunner, IExecOptions, IExecSyncOptions} from 'azure-pipelines-task-lib/toolrunner';
 import {BaseTerraformCommand} from './terraform-commands';
 import {TerraformInit, TerraformApply, TerraformPlan, TerraformDestroy} from './terraform-commands';
 import tasks = require('azure-pipelines-task-lib/task');
@@ -20,6 +20,22 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     providerName: string;
     terraformToolHandler: ITerraformToolHandler;
     backendConfig: Map<string, string>;
+
+    protected warnIfMultipleProviders(): void {
+        let terraformPath = tasks.which("terraform", true);
+
+        let terraformToolRunner: ToolRunner = tasks.tool(terraformPath);
+        terraformToolRunner.arg("providers");
+        let commandOutput = terraformToolRunner.execSync(<IExecSyncOptions>{
+            cwd: tasks.getInput("workingDirectory")
+        });
+
+        let countProviders = (commandOutput.stdout.match(/provider/g) || []).length;
+        tasks.debug(countProviders.toString());
+        if (countProviders > 1) {
+            tasks.warning("Multiple provider blocks specified in the .tf files in the current working drectory.");
+        }
+    }
     
     protected getServiceProviderNameFromProviderInput(): string {
         let provider: string = tasks.getInput("provider", true);
@@ -34,6 +50,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     abstract handleBackend(command: TerraformInit, terraformToolRunner: ToolRunner);
 
     public async init(): Promise<number> {
+        this.warnIfMultipleProviders();
         let backendName = `backendType${this.getServiceProviderNameFromProviderInput()}`;
 
         let initCommand = new TerraformInit(
