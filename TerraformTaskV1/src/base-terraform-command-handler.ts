@@ -21,6 +21,12 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     terraformToolHandler: ITerraformToolHandler;
     backendConfig: Map<string, string>;
 
+    constructor() {
+        this.providerName = "";
+        this.terraformToolHandler = new TerraformToolHandler(tasks);
+        this.backendConfig = new Map<string, string>();
+    }
+
     protected warnIfMultipleProviders(): void {
         let terraformPath = tasks.which("terraform", true);
 
@@ -50,7 +56,6 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     abstract handleBackend(command: TerraformInit, terraformToolRunner: ToolRunner);
 
     public async init(): Promise<number> {
-        this.warnIfMultipleProviders();
         let backendName = `backendType${this.getServiceProviderNameFromProviderInput()}`;
 
         let initCommand = new TerraformInit(
@@ -68,13 +73,8 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
         });
     }
 
-    constructor() {
-        this.providerName = "";
-        this.terraformToolHandler = new TerraformToolHandler(tasks);
-        this.backendConfig = new Map<string, string>();
-    }
-
     public async plan(): Promise<number> {
+        this.warnIfMultipleProviders();
         let serviceName = `environmentServiceName${this.getServiceProviderNameFromProviderInput()}`;
         let planCommand = new TerraformPlan(
             "plan",
@@ -91,6 +91,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     }
 
     public async apply(): Promise<number> {
+        this.warnIfMultipleProviders();
         let serviceName = `environmentServiceName${this.getServiceProviderNameFromProviderInput()}`;
         let autoApprove: string = '-auto-approve';
         let additionalArgs: string = tasks.getInput("commandOptions") || autoApprove;
@@ -114,6 +115,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     };
 
     public async destroy(): Promise<number> {
+        this.warnIfMultipleProviders();
         let serviceName = `environmentServiceName${this.getServiceProviderNameFromProviderInput()}`;
         let autoApprove: string = '-auto-approve';
         let additionalArgs: string = tasks.getInput("commandOptions") || autoApprove;
