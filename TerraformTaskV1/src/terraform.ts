@@ -13,8 +13,13 @@ export class TerraformToolHandler implements ITerraformToolHandler {
     }
 
     public createToolRunner(command?: BaseTerraformCommand): ToolRunner {
-        let terraformPath = this.tasks.which("terraform", true);
-
+        let terraformPath;
+        try {
+            terraformPath = this.tasks.which("terraform", true);
+        } catch(err) {
+            throw new Error(this.tasks.loc("TerraformToolNotFound"));
+        }
+        
         let terraformToolRunner: ToolRunner = this.tasks.tool(terraformPath);
         if (command) {
             terraformToolRunner.arg(command.name);

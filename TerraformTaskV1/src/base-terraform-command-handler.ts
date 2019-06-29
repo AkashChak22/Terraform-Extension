@@ -3,6 +3,7 @@ import {ToolRunner, IExecOptions, IExecSyncOptions} from 'azure-pipelines-task-l
 import {BaseTerraformCommand} from './terraform-commands';
 import {TerraformInit, TerraformApply, TerraformPlan, TerraformDestroy} from './terraform-commands';
 import tasks = require('azure-pipelines-task-lib/task');
+import * as path from 'path';
 
 export interface ITerraformCommandHandler {
     providerName: string;
@@ -22,7 +23,12 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
     backendConfig: Map<string, string>;
     
     protected warnIfMultipleProviders(): void {
-        let terraformPath = tasks.which("terraform", true);
+        let terraformPath;
+        try {
+            terraformPath = tasks.which("terraform", true);
+        } catch(err) {
+            throw new Error(tasks.loc("TerraformToolNotFound"));
+        }
 
         let terraformToolRunner: ToolRunner = tasks.tool(terraformPath);
         terraformToolRunner.arg("providers");
@@ -36,6 +42,22 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             tasks.warning("Multiple provider blocks specified in the .tf files in the current working drectory.");
         }
     }
+
+    // protected setOutputVariabletoStateFilePath(): void {
+    //     let terraformPath = tasks.which("terraform", true);
+
+    //     let terraformToolRunner: ToolRunner = tasks.tool(terraformPath);
+    //     terraformToolRunner.line("state pull");
+    //     let commandOutput = terraformToolRunner.execSync(<IExecSyncOptions>{
+    //         cwd: tasks.getInput("workingDirectory")
+    //     });
+
+    //     let stateFileContents = commandOutput.stdout;
+    //     const stateFilePath = path.resolve('state.json');
+    //     tasks.writeFile(stateFilePath, stateFileContents);
+
+    //     tasks.setVariable('TerraformStateFile', stateFilePath);
+    // }
 
     protected getServiceProviderNameFromProviderInput(): string {
         let provider: string = tasks.getInput("provider", true);
@@ -58,9 +80,15 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             tasks.getInput(backendName),
             tasks.getInput("commandOptions")
         );
-
-        let terraformTool = this.terraformToolHandler.createToolRunner(initCommand);
-        this.handleBackend(initCommand, terraformTool);
+        
+        let terraformTool;
+        try {
+            terraformTool = this.terraformToolHandler.createToolRunner(initCommand);
+            this.handleBackend(initCommand, terraformTool);
+        } catch (err) {
+            throw err;
+        }
+        
         
         return terraformTool.exec(<IExecOptions> {
             cwd: initCommand.workingDirectory
@@ -82,9 +110,15 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             tasks.getInput(serviceName, true),
             tasks.getInput("commandOptions")
         );
+        
+        let terraformTool;
+        try {
+            terraformTool = this.terraformToolHandler.createToolRunner(planCommand);
+            this.handleProvider(planCommand, terraformTool);
+        } catch (err) {
+            throw err;
+        }
 
-        let terraformTool = this.terraformToolHandler.createToolRunner(planCommand);
-        this.handleProvider(planCommand, terraformTool);
         return terraformTool.exec(<IExecOptions> {
             cwd: planCommand.workingDirectory
         });
@@ -92,6 +126,7 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
 
     public async apply(): Promise<number> {
         this.warnIfMultipleProviders();
+        // this.setOutputVariabletoStateFilePath();
         let serviceName = `environmentServiceName${this.getServiceProviderNameFromProviderInput()}`;
         let autoApprove: string = '-auto-approve';
         let additionalArgs: string = tasks.getInput("commandOptions") || autoApprove;
@@ -107,8 +142,14 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             additionalArgs
         );
 
-        let terraformTool = this.terraformToolHandler.createToolRunner(applyCommand);
-        this.handleProvider(applyCommand, terraformTool);
+        let terraformTool;
+        try {
+            terraformTool = this.terraformToolHandler.createToolRunner(applyCommand);
+            this.handleProvider(applyCommand, terraformTool);
+        } catch (err) {
+            throw err;
+        }
+
         return terraformTool.exec(<IExecOptions> {
             cwd: applyCommand.workingDirectory
         });
@@ -124,15 +165,21 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             additionalArgs = `${autoApprove} ${additionalArgs}`;
         }
 
-        let destroyCommand = new TerraformApply(
+        let destroyCommand = new TerraformDestroy(
             "destroy",
             tasks.getInput("workingDirectory"),
             tasks.getInput(serviceName, true),
             additionalArgs
         );
 
-        let terraformTool = this.terraformToolHandler.createToolRunner(destroyCommand);
-        this.handleProvider(destroyCommand, terraformTool);
+        let terraformTool;
+        try {
+            terraformTool = this.terraformToolHandler.createToolRunner(destroyCommand);
+            this.handleProvider(destroyCommand, terraformTool);
+        } catch (err) {
+            throw err ;
+        }
+
         return terraformTool.exec(<IExecOptions> {
             cwd: destroyCommand.workingDirectory
         });
@@ -147,7 +194,13 @@ export abstract class BaseTerraformCommandHandler implements ITerraformCommandHa
             tasks.getInput("commandOptions")
         );
 
-        let terraformTool = this.terraformToolHandler.createToolRunner(validateCommand);
+        let terraformTool;
+        try {
+            terraformTool = this.terraformToolHandler.createToolRunner(validateCommand);
+        } catch (err) {
+            throw err;
+        }
+
         return terraformTool.exec(<IExecOptions>{
             cwd: validateCommand.workingDirectory
         });

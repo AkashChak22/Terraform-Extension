@@ -9,11 +9,13 @@
     "visibility": [
         "Release"
     ],
-    "demands": [],
+    "demands": [
+        "terraform"
+    ],
     "version": {
         "Major": "0",
         "Minor": "0",
-        "Patch": "54"
+        "Patch": "85"
     },
     "instanceNameFormat": "$(provider) - terraform $(command)",
     "execution": {
@@ -274,6 +276,12 @@
             "groupName": "backendGCP"
         }
     ],
+    "outputVariables": [
+        {
+            "name": "TerraformStateFile",
+            "description": "The state file generated from the terraform plan, apply and destroy commands"
+        }
+    ],
     "dataSourceBindings": [
         {
             "target": "backendAzureRmResourceGroupName",
@@ -303,5 +311,8 @@
             "endpointId": "$(backendServiceGCP)",
             "dataSourceName": "GCP"
         }
-    ]
+    ],
+    "messages": {
+        "TerraformToolNotFound": "Failed to find terraform tool in paths"
+    }
 }

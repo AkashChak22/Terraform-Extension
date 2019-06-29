@@ -6,7 +6,7 @@ export class BaseTerraformCommand {
     constructor(
         name: string,
         workingDirectory: string,
-        additionalArgs?: string
+        additionalArgs?: string | undefined
     ) {
         this.name = name;
         this.workingDirectory = workingDirectory;  
@@ -37,7 +37,7 @@ export class TerraformPlan extends BaseTerraformCommand {
         name: string,
         workingDirectory: string,
         serviceProvidername: string,
-        additionalArgs?: string
+        additionalArgs?: string | undefined
     ) {
         super(name, workingDirectory, additionalArgs);
         this.serviceProvidername = serviceProvidername;
@@ -51,7 +51,7 @@ export class TerraformApply extends BaseTerraformCommand {
         name: string,
         workingDirectory: string,
         serviceProvidername: string,
-        additionalArgs?: string
+        additionalArgs?: string | undefined
     ) {
         super(name, workingDirectory, additionalArgs);
         this.serviceProvidername = serviceProvidername;
@@ -65,7 +65,7 @@ export class TerraformDestroy extends BaseTerraformCommand {
         name: string,
         workingDirectory: string,
         serviceProvidername: string,
-        additionalArgs?: string
+        additionalArgs?: string | undefined
     ) {
         super(name, workingDirectory, additionalArgs);
         this.serviceProvidername = serviceProvidername;

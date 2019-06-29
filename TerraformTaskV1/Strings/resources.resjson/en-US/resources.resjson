@@ -49,5 +49,6 @@
   "loc.input.label.backendGCPBucketName": "Bucket Name",
   "loc.input.help.backendGCPBucketName": "The name of the GCP storage bucket for storing the state file",
   "loc.input.label.backendGCPPrefix": "Prefix of state file",
-  "loc.input.help.backendGCPPrefix": "The GCS prefix inside the bucket. The states are stored in an object called <prefix>/<name>.tfstate"
+  "loc.input.help.backendGCPPrefix": "The GCS prefix inside the bucket. The states are stored in an object called <prefix>/<name>.tfstate",
+  "loc.messages.TerraformToolNotFound": "Failed to find terraform tool in paths"
 }

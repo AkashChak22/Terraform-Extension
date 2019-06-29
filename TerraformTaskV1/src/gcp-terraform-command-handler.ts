@@ -2,7 +2,8 @@ import tasks = require('azure-pipelines-task-lib/task');
 import {ToolRunner} from 'azure-pipelines-task-lib/toolrunner';
 import {TerraformInit, TerraformApply, TerraformPlan, TerraformDestroy} from './terraform-commands';
 import {BaseTerraformCommandHandler} from './base-terraform-command-handler';
-import * as path from 'path';
+import path = require('path');
+import * as uuidV4 from 'uuid/v4';
 
 export class TerraformCommandHandlerGCP extends BaseTerraformCommandHandler {
     constructor() {
@@ -10,19 +11,26 @@ export class TerraformCommandHandlerGCP extends BaseTerraformCommandHandler {
         this.providerName = "gcp";
     }
 
-    private setupBackend(backendServiceName: string) {
-        this.backendConfig.set('bucket', tasks.getInput("backendGCPBucketName", true));
-        this.backendConfig.set('prefix', tasks.getInput("backendGCPPrefix", true));
-
+    private getJsonKeyFilePath(serviceName: string) {
         // Get credentials for json file
-        const jsonKeyFilePath = path.resolve('credentials.json');
-        let clientEmail = tasks.getEndpointAuthorizationParameter(backendServiceName, "Issuer", false);
-        let tokenUri = tasks.getEndpointAuthorizationParameter(backendServiceName, "Audience", false);
-        let privateKey = tasks.getEndpointAuthorizationParameter(backendServiceName, "PrivateKey", false);
+        const jsonKeyFilePath = path.resolve(`credentials-${uuidV4()}.json`);
+
+        let clientEmail = tasks.getEndpointAuthorizationParameter(serviceName, "Issuer", false);
+        let tokenUri = tasks.getEndpointAuthorizationParameter(serviceName, "Audience", false);
+        let privateKey = tasks.getEndpointAuthorizationParameter(serviceName, "PrivateKey", false);
 
         // Create json string and write it to the file
         let jsonCredsString = `{"type": "service_account", "private_key": "${privateKey}", "client_email": "${clientEmail}", "token_uri": "${tokenUri}"}`
         tasks.writeFile(jsonKeyFilePath, jsonCredsString);
+
+        return jsonKeyFilePath;
+    }
+
+    private setupBackend(backendServiceName: string) {
+        this.backendConfig.set('bucket', tasks.getInput("backendGCPBucketName", true));
+        this.backendConfig.set('prefix', tasks.getInput("backendGCPPrefix", true));
+
+        let jsonKeyFilePath = this.getJsonKeyFilePath(backendServiceName);
 
         this.backendConfig.set('credentials', jsonKeyFilePath);
     }
@@ -38,17 +46,9 @@ export class TerraformCommandHandlerGCP extends BaseTerraformCommandHandler {
         }
     }
 
-    handleProvider(command: TerraformApply | TerraformPlan | TerraformDestroy, terraformToolRunner: ToolRunner) {
+    public handleProvider(command: TerraformApply | TerraformPlan | TerraformDestroy, terraformToolRunner: ToolRunner) {
         if (command.serviceProvidername) {
-            // Get credentials for json file
-            const jsonKeyFilePath = path.resolve('credentials.json');
-            let clientEmail = tasks.getEndpointAuthorizationParameter(command.serviceProvidername, "Issuer", false);
-            let tokenUri = tasks.getEndpointAuthorizationParameter(command.serviceProvidername, "Audience", false);
-            let privateKey = tasks.getEndpointAuthorizationParameter(command.serviceProvidername, "PrivateKey", false);
-
-            // Create json string and write it to the file
-            let jsonCredsString = `{"type": "service_account", "private_key": "${privateKey}", "client_email": "${clientEmail}", "token_uri": "${tokenUri}"}`
-            tasks.writeFile(jsonKeyFilePath, jsonCredsString);
+            let jsonKeyFilePath = this.getJsonKeyFilePath(command.serviceProvidername);
 
             process.env['GOOGLE_CREDENTIALS']  = `${jsonKeyFilePath}`;
             process.env['GOOGLE_PROJECT']  = tasks.getEndpointAuthorizationParameter(command.serviceProvidername, "project", false);            
