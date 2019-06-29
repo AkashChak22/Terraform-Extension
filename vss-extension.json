@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "custom-terraform-tasks",
     "name": "Custom Terraform Release Task",
-    "version": "0.0.60",
+    "version": "0.0.83",
     "publisher": "Akash-Chakrabarti",
     "targets": [
         {
@@ -16,9 +16,22 @@
     "files": [
         {
             "path": "TerraformTaskV1"
+        },
+        {
+            "path": "TerraformInstaller"
         }
     ],
     "contributions": [
+        {
+            "id": "custom-terraform-installer-task",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "TerraformInstaller"
+            }
+        },
         {
             "id": "custom-terraform-release-task",
             "type": "ms.vss-distributed-task.task",
@@ -93,7 +106,22 @@
                     {
                         "name": "AWS",
                         "endpointUrl": "{{endpoint.url}}",
-                        "resultSelector": "xpath://ListAllMyBucketsResult/Buckets/Bucket/Name"
+                        "RequestVerb":"GET",
+                        "resultSelector": "xpath://ListAllMyBucketsResult/Buckets/Bucket/Name",
+                        "headers": [
+                            {
+                                "name": "X-Amz-Date",
+                                "value": "{{ #getCurrentUTCDate {} }}"
+                            },
+                            {
+                                "name": "X-Amz-Content-Sha256",
+                                "value": "{{ #getHashedPayload {} }}"
+                            },
+                            {
+                                "name": "Authorization",
+                                "value": "{{ #getAuthorizationHeader { 'username' : 'endpoint.username', 'password' : 'endpoint.password', 'method': 'get' } }}"
+                            }
+                        ]
                     }                
                 ],
                 "authenticationSchemes": [
@@ -119,6 +147,17 @@
                                 "isConfidential": true,
                                 "validation": {
                                     "isRequired": true,
+                                    "dataType": "string"
+                                }
+                            },
+                            {
+                                "id": "region",
+                                "name": "Region",
+                                "description": "The region of the AWS bucket to use for storing the state file",
+                                "inputMode": "textbox",
+                                "isConfidential": false,
+                                "validation": {
+                                    "isRequired": false,
                                     "dataType": "string"
                                 }
                             }
