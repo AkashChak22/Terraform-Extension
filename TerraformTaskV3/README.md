@@ -44,9 +44,7 @@ The only pre-requisite for the task is that Terraform must be installed on the A
 
 - **Configuration Directory\*:** Select the directory that contains all the relevant terraform config (.tf) files. The task intends to use Terraform to build infrastructure on one provider at a time. So, all the config files in the configuration directory together should not specify more than one provider.
 
-- **Additional Command Arguments\*:** Provide any additional arguments for the selected command either as key-value pairs(-key=value) or as command line flags(-flag). Multiple options can also be provided delimited by spaces(-key1=value1 -key2=value2 -flag1 -flag2).
-
-Examples:
+- **Additional Command Arguments\*:** Provide any additional arguments for the selected command either as key-value pairs(-key=value) or as command line flags(-flag). Multiple options can also be provided delimited by spaces(-key1=value1 -key2=value2 -flag1 -flag2).<br>Examples:<br>
 	- -out=tfplan (for terraform plan)
 	- tfplan -auto-approve (for terraform apply)
 
