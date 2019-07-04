@@ -3,20 +3,18 @@
   "name": "TerraformInstaller",
   "friendlyName": "ms-resource:loc.friendlyName",
   "description": "ms-resource:loc.description",
-  "author": "Akash Chakrabarti",
+  "author": "Microsoft Corporation",
   "helpMarkDown": "ms-resource:loc.helpMarkDown",
   "category": "Tool",
   "visibility": [
+    "Build",
     "Release"
   ],
   "demands": [],
-  "capabilities": [
-    "terraform"
-  ],
   "version": {
     "Major": "0",
     "Minor": "0",
-    "Patch": "7"
+    "Patch": "9"
   },
   "instanceNameFormat": "ms-resource:loc.instanceNameFormat",
   "inputs": [
